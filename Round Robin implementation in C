@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define MAX_PROCESSES 10
+#define TIME_QUANTUM 2
+
+struct Process {
+    int pid;
+    int at;
+    int bt;
+    int remaining_time;
+    int completion_time;
+    int turnaround_time;
+    int waiting_time;
+};
+
+int main() {
+    // Initialize random number generator
+    srand(time(0));
+
+    // Initialize variables
+    int n, i, time = 0, quantum_count = 0;
+    struct Process processes[MAX_PROCESSES];
+    float avg_turnaround_time = 0, avg_waiting_time = 0;
+
+    // Prompt user for number of processes
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    // Generate random AT and BT values for each process
+    for (i = 0; i < n; i++) {
+        processes[i].pid = i + 1;
+        processes[i].at = rand() % 10;
+        processes[i].bt = rand() % 10 + 1;
+        processes[i].remaining_time = processes[i].bt;
+    }
+
+    // Perform Round Robin scheduling
+    while (1) {
+        int flag = 1;
+
+        for (i = 0; i < n; i++) {
+            if (processes[i].remaining_time > 0) {
+                flag = 0;
+
+                if (processes[i].remaining_time <= TIME_QUANTUM) {
+                    quantum_count += processes[i].remaining_time;
+                    time += processes[i].remaining_time;
+                    processes[i].remaining_time = 0;
+                } else {
+                    quantum_count += TIME_QUANTUM;
+                    time += TIME_QUANTUM;
+                    processes[i].remaining_time -= TIME_QUANTUM;
+                }
+
+                if (processes[i].remaining_time == 0) {
+                    processes[i].completion_time = time;
+                    processes[i].turnaround_time = processes[i].completion_time - processes[i].at;
+                    processes[i].waiting_time = processes[i].turnaround_time - processes[i].bt;
+
+                    avg_turnaround_time += processes[i].turnaround_time;
+                    avg_waiting_time += processes[i].waiting_time;
+                }
+            }
+        }
+
+        if (flag == 1) {
+            break;
+        }
+    }
+
+    // Calculate average turnaround time and average waiting time
+    avg_turnaround_time /= n;
+    avg_waiting_time /= n;
+
+    // Print table chart
+    printf("\n|%-7s|%-7s|%-7s|%-7s|%-7s|%-7s|%-7s|\n", "Process", "AT", "BT", "CT", "TAT", "WT", "RT");
+    for (i = 0; i < n; i++) {
+        printf("|%-7d|%-7d|%-7d|%-7d|%-7d|%-7d|%-7d|\n", processes[i].pid, processes[i].at, processes[i].bt, processes[i].completion_time, processes[i].turnaround_time, processes[i].waiting_time, processes[i].bt);
+    }
+
+    // Print average turnaround time and average waiting time
+    printf("\nAverage Turnaround Time: %.2f\n", avg_turnaround_time);
+    printf("Average Waiting Time: %.2f\n", avg_waiting_time);
+
+    return 0;
+}
+
